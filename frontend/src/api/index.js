@@ -131,7 +131,12 @@ export const studentAPI = {
   uploadResume: (formData) => api.post('/student/resumes/upload', formData, {
     headers: { 'Content-Type': 'multipart/form-data' }
   }),
-  setDefaultResume: (id) => api.post(`/student/resumes/${id}/set-default`)
+  setDefaultResume: (id) => api.post(`/student/resumes/${id}/set-default`),
+  getMessages: (params) => api.get('/student/messages/', { params }),
+  getUnreadMessageCount: () => api.get('/student/messages/unread-count'),
+  markMessageRead: (id) => api.post(`/student/messages/${id}/read`),
+  markAllMessagesRead: () => api.post('/student/messages/read-all'),
+  deleteMessage: (id) => api.delete(`/student/messages/${id}`)
 }
 
 export const companyAPI = {
