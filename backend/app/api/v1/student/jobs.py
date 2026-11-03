@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Body, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import or_
 from typing import Optional
@@ -390,12 +390,11 @@ def get_job_detail(
 @router.post("/{job_id}/apply")
 def apply_for_job(
     job_id: int,
-    resume_id: int = None,
-    cover_letter: str = None,
+    resume_id: Optional[int] = Body(default=None),
+    cover_letter: Optional[str] = Body(default=None),
     db: Session = Depends(get_db),
     current_student: Student = Depends(get_current_student)
 ):
-    from app.models.application import Application, ApplicationStatus
     from app.models.resume import Resume
 
     job = db.query(Job).filter(Job.id == job_id).first()
@@ -427,8 +426,13 @@ def apply_for_job(
             raise HTTPException(status_code=404, detail="简历不存在")
     else:
         resume = db.query(Resume).filter(
-            Resume.student_id == current_student.id
+            Resume.student_id == current_student.id,
+            Resume.is_default == True
         ).first()
+        if not resume:
+            resume = db.query(Resume).filter(
+                Resume.student_id == current_student.id
+            ).order_by(Resume.updated_at.desc()).first()
         if not resume:
             raise HTTPException(status_code=404, detail="请先创建简历")
 
