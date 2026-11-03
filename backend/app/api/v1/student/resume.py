@@ -120,7 +120,7 @@ async def upload_resume(
     file: UploadFile = File(...),
     resume_id: int = None,
     db: Session = Depends(get_db),
-    current_student: Student = Depends(get_current_user)
+    current_student: Student = Depends(get_current_student)
 ):
     import os
     import uuid
@@ -131,7 +131,8 @@ async def upload_resume(
     if not file.filename.lower().endswith('.pdf'):
         raise HTTPException(status_code=400, detail="仅支持 PDF 格式")
 
-    if file.size > 10 * 1024 * 1024:
+    content = await file.read()
+    if len(content) > 10 * 1024 * 1024:
         raise HTTPException(status_code=400, detail="文件大小不能超过 10MB")
 
     upload_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))), "uploads", "resumes")
@@ -142,7 +143,6 @@ async def upload_resume(
     file_path = os.path.join(upload_dir, unique_filename)
 
     with open(file_path, "wb") as f:
-        content = await file.read()
         f.write(content)
 
     file_url = f"/uploads/resumes/{unique_filename}"
