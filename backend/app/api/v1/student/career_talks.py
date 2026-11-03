@@ -26,7 +26,7 @@ def get_optional_student(current_user: User = Depends(get_optional_user)) -> Stu
             return None
         student = current_user.student_profile
         return student
-    except:
+    except Exception:
         return None
 
 

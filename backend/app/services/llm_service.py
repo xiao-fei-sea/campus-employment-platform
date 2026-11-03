@@ -102,7 +102,7 @@ class LLMService:
                     try:
                         data = json.loads(content)
                         return data.get('suggestions', [])
-                    except:
+                    except Exception:
                         return [content]
                 return []
         except Exception as e:
