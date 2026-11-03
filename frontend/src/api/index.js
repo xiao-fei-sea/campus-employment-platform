@@ -209,5 +209,9 @@ export const adminAPI = {
   deleteAdminUser: (id) => api.delete(`/admin/system/users/${id}`),
   getRoles: () => api.get('/admin/system/roles'),
   updateRolePermissions: (id, data) => api.put(`/admin/system/roles/${id}`, data),
-  getOperationLogs: (params) => api.get('/admin/system/operation-logs', { params })
+  getOperationLogs: (params) => api.get('/admin/system/operation-logs', { params }),
+  getBackups: () => api.get('/admin/system/backups'),
+  createBackup: () => api.post('/admin/system/backup'),
+  downloadBackup: (filename) => api.get(`/admin/system/backups/${filename}`, { responseType: 'blob' }),
+  deleteBackup: (filename) => api.delete(`/admin/system/backups/${filename}`)
 }

@@ -89,13 +89,16 @@
             </span>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="120" align="center">
+        <el-table-column label="操作" width="180" align="center">
           <template #default="{ row }">
             <el-button size="small" type="primary" @click="editUser(row)">
               <i class="fas fa-edit"></i>
             </el-button>
             <el-button size="small" @click="resetPassword(row)">
               <i class="fas fa-key"></i>
+            </el-button>
+            <el-button size="small" type="danger" @click="removeUser(row)">
+              <i class="fas fa-trash"></i>
             </el-button>
           </template>
         </el-table-column>
@@ -202,29 +205,31 @@
         <div class="border border-gray-200 rounded-xl p-6">
           <div class="flex items-center justify-between mb-4">
             <h4 class="font-bold text-gray-900">自动备份</h4>
-            <span class="px-3 py-1 bg-green-100 text-green-700 text-sm rounded-full">已启用</span>
+            <span class="px-3 py-1 text-sm rounded-full" :class="backupConfig.frequency === 'none' ? 'bg-gray-100 text-gray-600' : 'bg-green-100 text-green-700'">
+              {{ backupConfig.frequency === 'none' ? '已关闭' : '已启用' }}
+            </span>
           </div>
-          <p class="text-sm text-gray-600 mb-4">每周日凌晨2:00自动执行全量备份</p>
+          <p class="text-sm text-gray-600 mb-4">{{ backupConfig.frequency === 'none' ? '当前不会自动执行备份' : '按所选周期自动执行全量备份' }}</p>
           <el-select v-model="backupConfig.frequency" class="w-full">
             <el-option label="每天" value="daily" />
             <el-option label="每周" value="weekly" />
             <el-option label="每月" value="monthly" />
+            <el-option label="关闭自动备份" value="none" />
           </el-select>
+          <el-button class="mt-4 w-full" @click="saveBackupConfig">保存备份配置</el-button>
         </div>
         <div class="border border-gray-200 rounded-xl p-6">
           <div class="flex items-center justify-between mb-4">
             <h4 class="font-bold text-gray-900">备份存储</h4>
-            <span class="px-3 py-1 bg-blue-100 text-blue-700 text-sm rounded-full">本地 + 云端</span>
+            <span class="px-3 py-1 bg-blue-100 text-blue-700 text-sm rounded-full">本地</span>
           </div>
-          <p class="text-sm text-gray-600 mb-4">已使用 12.5 GB / 50 GB</p>
-          <div class="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
-            <div class="h-full bg-emerald-500 rounded-full" style="width: 25%"></div>
-          </div>
+          <p class="text-sm text-gray-600 mb-2">共 {{ backupRecords.length }} 个备份文件</p>
+          <p class="text-sm text-gray-600">备份文件保存在服务器 backups 目录</p>
         </div>
       </div>
       <div class="space-y-4">
         <h4 class="font-bold text-gray-900">最近备份记录</h4>
-        <el-table :data="backupRecords" stripe>
+        <el-table :data="backupRecords" stripe row-key="filename">
           <el-table-column label="备份时间" prop="time" width="180" />
           <el-table-column label="备份类型" prop="type" width="120" />
           <el-table-column label="文件大小" prop="size" width="120" />
@@ -236,9 +241,9 @@
             </template>
           </el-table-column>
           <el-table-column label="操作">
-            <template #default>
-              <el-button size="small" type="primary">下载</el-button>
-              <el-button size="small" type="danger">删除</el-button>
+            <template #default="{ row }">
+              <el-button size="small" type="primary" @click="downloadBackupFile(row)">下载</el-button>
+              <el-button size="small" type="danger" @click="removeBackup(row)">删除</el-button>
             </template>
           </el-table-column>
         </el-table>
@@ -250,6 +255,9 @@
 
     <el-dialog v-model="showAddDialog" title="添加账号" width="500px">
       <el-form :model="adminForm" label-position="top">
+        <el-form-item label="登录名">
+          <el-input v-model="adminForm.username" placeholder="请输入登录名" />
+        </el-form-item>
         <el-form-item label="姓名">
           <el-input v-model="adminForm.name" placeholder="请输入管理员姓名" />
         </el-form-item>
@@ -259,7 +267,6 @@
         <el-form-item label="角色">
           <el-select v-model="adminForm.role" class="w-full">
             <el-option label="超级管理员" value="admin" />
-            <el-option label="就业专员" value="staff" />
             <el-option label="辅导员" value="counselor" />
           </el-select>
         </el-form-item>
@@ -270,6 +277,27 @@
       <template #footer>
         <el-button @click="showAddDialog = false">取消</el-button>
         <el-button type="primary" @click="addAdminAccount">添加</el-button>
+      </template>
+    </el-dialog>
+
+    <el-dialog v-model="showEditDialog" title="编辑账号" width="500px">
+      <el-form :model="editForm" label-position="top">
+        <el-form-item label="邮箱">
+          <el-input v-model="editForm.email" />
+        </el-form-item>
+        <el-form-item label="角色">
+          <el-select v-model="editForm.role" class="w-full">
+            <el-option label="超级管理员" value="admin" />
+            <el-option label="辅导员" value="counselor" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="账号状态">
+          <el-switch v-model="editForm.is_active" active-text="正常" inactive-text="禁用" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="showEditDialog = false">取消</el-button>
+        <el-button type="primary" @click="saveUser">保存</el-button>
       </template>
     </el-dialog>
   </div>
@@ -295,7 +323,9 @@ const tabs = [
   { key: 'backup', label: '数据备份', icon: 'fas fa-database' }
 ]
 
-const adminForm = ref({ name: '', email: '', role: 'staff', password: '' })
+const adminForm = ref({ username: '', name: '', email: '', role: 'counselor', password: '' })
+const showEditDialog = ref(false)
+const editForm = reactive({ id: null, email: '', role: 'counselor', is_active: true })
 
 const users = ref([])
 const totalUsers = computed(() => users.value.length)
@@ -396,34 +426,80 @@ function exportLogs() {
 }
 
 async function addAdminAccount() {
-  if (!adminForm.value.name || !adminForm.value.email || !adminForm.value.password) {
-    ElMessage.warning('请填写完整信息')
+  if (!adminForm.value.username || !adminForm.value.email || !adminForm.value.password) {
+    ElMessage.warning('请填写登录名、邮箱和密码')
     return
   }
   try {
-    await adminAPI.createAdminUser(adminForm.value)
+    await adminAPI.createAdminUser({
+      username: adminForm.value.username,
+      email: adminForm.value.email,
+      role: adminForm.value.role,
+      password: adminForm.value.password
+    })
     ElMessage.success('添加成功')
     showAddDialog.value = false
+    adminForm.value = { username: '', name: '', email: '', role: 'counselor', password: '' }
     fetchUsers()
   } catch (error) {
-    ElMessage.error('添加失败')
+    ElMessage.error(error.response?.data?.detail || '添加失败')
   }
 }
 
 async function editUser(user) {
-  ElMessage.info('编辑功能开发中')
+  editForm.id = user.id
+  editForm.email = user.email
+  editForm.role = user.role
+  editForm.is_active = user.is_active
+  showEditDialog.value = true
+}
+
+async function saveUser() {
+  try {
+    await adminAPI.updateAdminUser(editForm.id, {
+      email: editForm.email,
+      role: editForm.role,
+      is_active: editForm.is_active
+    })
+    ElMessage.success('保存成功')
+    showEditDialog.value = false
+    fetchUsers()
+  } catch (error) {
+    ElMessage.error(error.response?.data?.detail || '保存失败')
+  }
 }
 
 async function resetPassword(user) {
   try {
-    await ElMessageBox.confirm('确定要重置该用户的密码吗？', '提示', {
+    const { value } = await ElMessageBox.prompt('请输入新的登录密码（至少6位）', '重置密码', {
       confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      inputPattern: /^.{6,}$/,
+      inputErrorMessage: '密码至少6位'
+    })
+    await adminAPI.updateAdminUser(user.id, { password: value })
+    ElMessage.success('密码已重置')
+  } catch (error) {
+    if (error !== 'cancel' && error !== 'close') {
+      ElMessage.error(error.response?.data?.detail || '重置密码失败')
+    }
+  }
+}
+
+async function removeUser(user) {
+  try {
+    await ElMessageBox.confirm(`确定删除账号「${user.username}」吗？`, '提示', {
+      confirmButtonText: '删除',
       cancelButtonText: '取消',
       type: 'warning'
     })
-    ElMessage.success('密码已重置')
-  } catch {
-    // User cancelled
+    await adminAPI.deleteAdminUser(user.id)
+    ElMessage.success('删除成功')
+    fetchUsers()
+  } catch (error) {
+    if (error !== 'cancel' && error !== 'close') {
+      ElMessage.error(error.response?.data?.detail || '删除失败')
+    }
   }
 }
 
@@ -456,23 +532,91 @@ const backupConfig = ref({
   frequency: 'weekly'
 })
 
-const backupRecords = ref([
-  { time: '2026-04-20 02:00:00', type: '自动', size: '2.3 GB', status: 'success' },
-  { time: '2026-04-13 02:00:00', type: '自动', size: '2.1 GB', status: 'success' },
-  { time: '2026-04-06 02:00:00', type: '自动', size: '2.0 GB', status: 'success' }
-])
+const backupRecords = ref([])
 
-const saveNotificationSettings = () => {
-  ElMessage.success('保存成功')
+async function loadSystemSettings() {
+  try {
+    const res = await adminAPI.getSettings()
+    if (res.data?.notifications) {
+      Object.assign(notificationSettings, res.data.notifications)
+    }
+    if (res.data?.backup?.frequency) {
+      backupConfig.value.frequency = res.data.backup.frequency
+    }
+  } catch (error) {
+    console.error('Failed to load system settings:', error)
+  }
 }
 
-const createBackup = () => {
-  ElMessage.success('备份任务已创建')
+async function fetchBackups() {
+  try {
+    const res = await adminAPI.getBackups()
+    backupRecords.value = Array.isArray(res.data) ? res.data : []
+  } catch (error) {
+    console.error('Failed to fetch backups:', error)
+  }
+}
+
+const saveNotificationSettings = async () => {
+  try {
+    await adminAPI.updateSettings({ notifications: notificationSettings })
+    ElMessage.success('保存成功')
+  } catch (error) {
+    ElMessage.error('保存失败')
+  }
+}
+
+const saveBackupConfig = async () => {
+  try {
+    await adminAPI.updateSettings({ backup: backupConfig.value })
+    ElMessage.success('备份配置已保存')
+  } catch (error) {
+    ElMessage.error('保存失败')
+  }
+}
+
+const createBackup = async () => {
+  try {
+    await adminAPI.createBackup()
+    ElMessage.success('备份已完成')
+    await fetchBackups()
+  } catch (error) {
+    ElMessage.error(error.response?.data?.detail || '备份失败')
+  }
+}
+
+const downloadBackupFile = async (row) => {
+  try {
+    const res = await adminAPI.downloadBackup(row.filename)
+    const url = window.URL.createObjectURL(new Blob([res.data]))
+    const link = document.createElement('a')
+    link.href = url
+    link.download = row.filename
+    link.click()
+    window.URL.revokeObjectURL(url)
+  } catch (error) {
+    ElMessage.error('下载失败')
+  }
+}
+
+const removeBackup = async (row) => {
+  try {
+    await ElMessageBox.confirm('确定删除该备份文件吗？', '提示', { type: 'warning' })
+    await adminAPI.deleteBackup(row.filename)
+    ElMessage.success('删除成功')
+    await fetchBackups()
+  } catch (error) {
+    if (error !== 'cancel' && error !== 'close') {
+      ElMessage.error('删除失败')
+    }
+  }
 }
 
 onMounted(() => {
   fetchUsers()
   fetchRoles()
   fetchLogs()
+  loadSystemSettings()
+  fetchBackups()
 })
 </script>
