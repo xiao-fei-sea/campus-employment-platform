@@ -14,6 +14,18 @@ class UserCreate(UserBase):
     role: UserRole = UserRole.STUDENT
 
 
+class UserUpdate(BaseModel):
+    email: Optional[EmailStr] = None
+    role: Optional[UserRole] = None
+    password: Optional[str] = Field(default=None, min_length=6, max_length=100)
+    is_active: Optional[bool] = None
+
+
+class PasswordChange(BaseModel):
+    old_password: str
+    new_password: str = Field(..., min_length=6, max_length=100)
+
+
 class UserResponse(UserBase):
     id: int
     role: UserRole
