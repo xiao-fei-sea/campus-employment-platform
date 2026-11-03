@@ -17,7 +17,7 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7
 
-    DATABASE_URL: str = "DATABASE_URL=mysql+pymysql://root:107606@localhost:3306/campus_employment"
+    DATABASE_URL: str = "mysql+pymysql://root:107606@localhost:3306/campus_employment"
     REDIS_URL: str = "redis://localhost:6379/0"
 
     CELERY_BROKER_URL: str = "redis://localhost:6379/1"
