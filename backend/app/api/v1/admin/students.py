@@ -190,7 +190,7 @@ def update_student(
     return student
 
 
-@router.get("/{student_id}/employment-status/update", response_model=StudentResponse)
+@router.put("/{student_id}/employment-status", response_model=StudentResponse)
 def update_employment_status(
     student_id: int,
     status: EmploymentStatus,

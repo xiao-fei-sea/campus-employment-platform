@@ -387,7 +387,7 @@ POST /auth/password
 | POST | `/admin/students` | 新增学生（同时创建登录账号） |
 | GET | `/admin/students/{student_id}` | 学生详情 |
 | PUT | `/admin/students/{student_id}` | 更新学生信息/就业状态 |
-| GET | `/admin/students/{student_id}/employment-status/update` | 单独更新就业状态（兼容旧接口） |
+| PUT | `/admin/students/{student_id}/employment-status` | 更新就业状态（`status` 查询参数） |
 
 新增学生参数：
 
