@@ -20,8 +20,11 @@ backend/**/__pycache__/
 backend/**/*.pyc
 backend/**/*.log
 
-# 运行时上传的用户文件（简历 / 头像 / Logo）
+# 运行时上传的用户文件（简历 / 头像 / Logo / 营业执照）
 backend/**/uploads/
+# 系统设置与备份等运行时数据
+backend/**/data/
+backend/**/backups/
 
 # ---- 前端 ----
 frontend/node_modules/
