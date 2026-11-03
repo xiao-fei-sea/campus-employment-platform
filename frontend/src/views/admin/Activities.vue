@@ -28,6 +28,9 @@
             <el-option label="已结束" value="ended" />
           </el-select>
           <el-input v-model="searchKeyword" placeholder="搜索企业名称..." class="w-64" prefix-icon="Search" @input="handleSearch" />
+          <el-button type="primary" @click="openCreateDialog">
+            <i class="fas fa-plus mr-2"></i>发布活动
+          </el-button>
           <el-button @click="showExportMenu = !showExportMenu" class="relative">
             <i class="fas fa-download mr-2"></i>导出
             <div v-if="showExportMenu" class="absolute right-0 top-full mt-2 bg-white rounded-xl shadow-lg border border-gray-200 py-2 z-50 min-w-32">
@@ -229,6 +232,68 @@
         <el-button type="primary" @click="saveActivity" :loading="saving">保存</el-button>
       </template>
     </el-dialog>
+
+    <el-dialog v-model="showCreateDialog" title="发布活动" width="600px">
+      <el-form :model="createForm" label-position="top" class="space-y-4">
+        <el-form-item label="所属企业" required>
+          <el-select v-model="createForm.company_id" placeholder="请选择企业" filterable class="w-full">
+            <el-option
+              v-for="company in companies"
+              :key="company.id"
+              :label="company.name"
+              :value="company.id"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="活动标题" required>
+          <el-input v-model="createForm.title" placeholder="请输入活动标题" />
+        </el-form-item>
+        <el-form-item label="活动类型">
+          <el-select v-model="createForm.activity_type" class="w-full">
+            <el-option label="宣讲会" value="career_talk" />
+            <el-option label="招聘会" value="job_fair" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="主讲人">
+          <el-input v-model="createForm.speaker_name" placeholder="请输入主讲人姓名" />
+        </el-form-item>
+        <div class="grid grid-cols-2 gap-4">
+          <el-form-item label="开始时间" required>
+            <el-date-picker
+              v-model="createForm.start_time"
+              type="datetime"
+              placeholder="选择开始时间"
+              class="w-full"
+              format="YYYY-MM-DD HH:mm"
+              value-format="YYYY-MM-DDTHH:mm:ss"
+            />
+          </el-form-item>
+          <el-form-item label="结束时间" required>
+            <el-date-picker
+              v-model="createForm.end_time"
+              type="datetime"
+              placeholder="选择结束时间"
+              class="w-full"
+              format="YYYY-MM-DD HH:mm"
+              value-format="YYYY-MM-DDTHH:mm:ss"
+            />
+          </el-form-item>
+        </div>
+        <el-form-item label="活动地点" required>
+          <el-input v-model="createForm.location" placeholder="请输入活动地点" />
+        </el-form-item>
+        <el-form-item label="场地容量">
+          <el-input-number v-model="createForm.max_attendees" :min="1" class="w-full" />
+        </el-form-item>
+        <el-form-item label="活动描述">
+          <el-input v-model="createForm.description" type="textarea" :rows="4" placeholder="请输入活动描述" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="showCreateDialog = false">取消</el-button>
+        <el-button type="primary" @click="submitCreate" :loading="creating">发布</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -239,15 +304,19 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { adminAPI } from '@/api/index'
 import * as XLSX from 'xlsx'
 
-const showDialog = ref(false)
-const dialogTitle = ref('发布活动')
-const activityForm = ref({
+const showCreateDialog = ref(false)
+const creating = ref(false)
+const companies = ref([])
+const createForm = ref({
+  company_id: null,
   title: '',
-  type: 'career_talk',
-  date: '',
+  activity_type: 'career_talk',
+  speaker_name: '',
+  start_time: '',
+  end_time: '',
   location: '',
-  capacity: 200,
-  logo: ''
+  max_attendees: 200,
+  description: ''
 })
 
 const showDetailDialog = ref(false)
@@ -297,20 +366,16 @@ const gradientColors = [
 
 async function fetchStats() {
   try {
-    console.log('正在获取统计数据...')
     const res = await adminAPI.getActivities({ page: 1, page_size: 100 })
-    console.log('统计数据响应:', res)
     if (res?.data) {
       const data = res.data
       const allActivities = data.activities || []
-      const total = data.total || allActivities.length
       stats.value = {
         careerTalks: allActivities.filter(a => a.activity_type === 'career_talk' || !a.activity_type).length,
         jobFairs: allActivities.filter(a => a.activity_type === 'job_fair').length,
         participants: allActivities.reduce((sum, a) => sum + (a.current_attendees || 0), 0),
         companies: new Set(allActivities.map(a => a.company_id)).size
       }
-      console.log('统计数据已设置:', stats.value)
     }
   } catch (error) {
     console.error('Failed to fetch stats:', error)
@@ -318,28 +383,21 @@ async function fetchStats() {
   }
 }
 
-async function fetchActivities(fetchAll = false) {
+async function fetchActivities() {
   loading.value = true
   try {
-    const params = {
-      page: fetchAll ? 1 : currentPage.value,
-      page_size: fetchAll ? 100 : pageSize.value
-    }
+    const params = { page: 1, page_size: 100 }
     if (filterStatus.value && filterStatus.value !== 'all') {
       params.status = filterStatus.value
     }
     if (searchKeyword.value.trim()) {
       params.keyword = searchKeyword.value.trim()
     }
-    console.log('正在获取活动列表，参数:', params)
     const res = await adminAPI.getActivities(params)
-    console.log('活动列表响应:', res)
-    console.log('活动列表数据:', res.data)
     if (res?.data) {
       const data = res.data
       activitiesRaw.value = data.activities || []
-      totalActivities.value = fetchAll ? activitiesRaw.value.length : (data.total || 0)
-      console.log('设置后的活动数据:', activitiesRaw.value)
+      totalActivities.value = data.total || activitiesRaw.value.length
     }
   } catch (error) {
     console.error('获取活动列表失败:', error)
@@ -355,7 +413,7 @@ const tabs = computed(() => [
   { label: '场地管理', value: 'venue', icon: 'fas fa-building', count: 0 }
 ])
 
-const totalPages = computed(() => Math.ceil(totalActivities.value / pageSize.value) || 1)
+const totalPages = computed(() => Math.ceil(filteredActivities.value.length / pageSize.value) || 1)
 
 const visiblePages = computed(() => {
   const pages = []
@@ -375,18 +433,17 @@ const visiblePages = computed(() => {
 
 const filteredActivities = computed(() => {
   let result = activitiesRaw.value
-  console.log('filteredActivities - raw count:', result.length, 'activeTab:', activeTab.value)
   if (activeTab.value === 'talk') {
     result = result.filter(a => a.activity_type === 'career_talk' || !a.activity_type)
   } else if (activeTab.value === 'fair') {
     result = result.filter(a => a.activity_type === 'job_fair')
   }
-  console.log('filteredActivities - filtered count:', result.length)
   return result
 })
 
 const paginatedActivities = computed(() => {
-  return filteredActivities.value
+  const start = (currentPage.value - 1) * pageSize.value
+  return filteredActivities.value.slice(start, start + pageSize.value)
 })
 
 const getTypeIcon = (activity) => {
@@ -574,6 +631,71 @@ const saveActivity = async () => {
   }
 }
 
+const loadCompanies = async () => {
+  try {
+    const res = await adminAPI.getCompanies({ page: 1, page_size: 100 })
+    companies.value = res?.data?.companies || []
+  } catch (error) {
+    ElMessage.error('获取企业列表失败')
+  }
+}
+
+const openCreateDialog = () => {
+  createForm.value = {
+    company_id: null,
+    title: '',
+    activity_type: activeTab.value === 'fair' ? 'job_fair' : 'career_talk',
+    speaker_name: '',
+    start_time: '',
+    end_time: '',
+    location: '',
+    max_attendees: 200,
+    description: ''
+  }
+  showCreateDialog.value = true
+}
+
+const submitCreate = async () => {
+  const form = createForm.value
+  if (!form.company_id) {
+    ElMessage.warning('请选择所属企业')
+    return
+  }
+  if (!form.title.trim()) {
+    ElMessage.warning('请输入活动标题')
+    return
+  }
+  if (!form.start_time || !form.end_time) {
+    ElMessage.warning('请选择活动起止时间')
+    return
+  }
+  if (new Date(form.end_time) <= new Date(form.start_time)) {
+    ElMessage.warning('结束时间必须晚于开始时间')
+    return
+  }
+  if (!form.location.trim()) {
+    ElMessage.warning('请输入活动地点')
+    return
+  }
+  try {
+    creating.value = true
+    await adminAPI.createActivity({
+      ...form,
+      title: form.title.trim(),
+      location: form.location.trim(),
+      speaker_name: form.speaker_name.trim() || null
+    })
+    ElMessage.success('活动发布成功')
+    showCreateDialog.value = false
+    fetchActivities()
+    fetchStats()
+  } catch (error) {
+    ElMessage.error(error?.response?.data?.detail || '发布失败')
+  } finally {
+    creating.value = false
+  }
+}
+
 const deleteActivity = async (activity) => {
   try {
     await ElMessageBox.confirm('确定要删除该活动吗？', '提示', {
@@ -634,16 +756,13 @@ const handleSearch = () => {
 
 watch([activeTab, filterStatus, searchKeyword], () => {
   currentPage.value = 1
-  fetchActivities(true)
-})
-
-watch(currentPage, () => {
   fetchActivities()
 })
 
 onMounted(() => {
   fetchStats()
-  fetchActivities(true)
+  fetchActivities()
+  loadCompanies()
   document.addEventListener('click', (e) => {
     if (!e.target.closest('.relative')) {
       showExportMenu.value = false
