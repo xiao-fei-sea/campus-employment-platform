@@ -142,8 +142,37 @@
           </div>
         </form>
 
-        <div v-else-if="activeTab === 'account'" class="text-center p-8">
-          <p class="text-gray-500">账号管理功能开发中...</p>
+        <div v-else-if="activeTab === 'account'" class="space-y-6">
+          <div class="grid grid-cols-2 gap-6">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">登录账号</label>
+              <el-input :model-value="userStore.userInfo?.username" disabled />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">绑定邮箱</label>
+              <el-input :model-value="userStore.userInfo?.email" disabled />
+            </div>
+          </div>
+          <div class="pt-4 border-t border-gray-100">
+            <h4 class="font-medium text-gray-900 mb-4">修改密码</h4>
+            <div class="grid grid-cols-3 gap-6">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">当前密码</label>
+                <el-input v-model="passwordForm.oldPassword" type="password" show-password />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">新密码</label>
+                <el-input v-model="passwordForm.newPassword" type="password" show-password />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">确认密码</label>
+                <el-input v-model="passwordForm.confirmPassword" type="password" show-password />
+              </div>
+            </div>
+          </div>
+          <div class="flex justify-end">
+            <el-button type="primary" @click="changePassword">保存新密码</el-button>
+          </div>
         </div>
 
         <div v-else-if="activeTab === 'certification'" class="text-center p-8">
@@ -154,12 +183,51 @@
             <i class="fas fa-clock text-4xl text-yellow-600"></i>
           </div>
           <h3 class="text-xl font-bold text-gray-900 mb-2">{{ company.status === 'approved' ? '已认证' : '待认证' }}</h3>
-          <p class="text-gray-500">{{ company.status === 'approved' ? '营业执照已认证' : '请等待管理员审核' }}</p>
+          <p class="text-gray-500">{{ company.status === 'approved' ? '营业执照已认证' : '请上传营业执照并等待管理员审核' }}</p>
           <p v-if="company.verified_at" class="text-sm text-gray-400 mt-2">认证时间：{{ company.verified_at }}</p>
+          <div class="mt-6 flex items-center justify-center space-x-4">
+            <input ref="licenseInput" type="file" accept=".pdf,image/*" class="hidden" @change="handleLicenseUpload">
+            <el-button @click="triggerLicenseUpload">
+              <i class="fas fa-upload mr-2"></i>{{ company.license_url ? '重新上传执照' : '上传营业执照' }}
+            </el-button>
+            <a v-if="company.license_url" :href="company.license_url" target="_blank" class="text-purple-600 hover:underline">
+              查看已上传文件
+            </a>
+          </div>
         </div>
 
-        <div v-else-if="activeTab === 'notification'" class="text-center p-8">
-          <p class="text-gray-500">通知设置功能开发中...</p>
+        <div v-else-if="activeTab === 'notification'" class="space-y-5">
+          <div class="flex items-center justify-between py-3 border-b border-gray-100">
+            <div>
+              <p class="font-medium text-gray-900">新简历提醒</p>
+              <p class="text-sm text-gray-500">收到新的岗位投递时通知我</p>
+            </div>
+            <el-switch v-model="notifications.newApplicant" />
+          </div>
+          <div class="flex items-center justify-between py-3 border-b border-gray-100">
+            <div>
+              <p class="font-medium text-gray-900">投递撤回提醒</p>
+              <p class="text-sm text-gray-500">候选人撤回投递时通知我</p>
+            </div>
+            <el-switch v-model="notifications.withdraw" />
+          </div>
+          <div class="flex items-center justify-between py-3 border-b border-gray-100">
+            <div>
+              <p class="font-medium text-gray-900">宣讲会报名提醒</p>
+              <p class="text-sm text-gray-500">有学生报名企业宣讲会时通知我</p>
+            </div>
+            <el-switch v-model="notifications.activitySignup" />
+          </div>
+          <div class="flex items-center justify-between py-3">
+            <div>
+              <p class="font-medium text-gray-900">每周数据报告</p>
+              <p class="text-sm text-gray-500">每周一发送招聘数据汇总邮件</p>
+            </div>
+            <el-switch v-model="notifications.weeklyReport" />
+          </div>
+          <div class="flex justify-end pt-4">
+            <el-button type="primary" @click="saveNotifications">保存设置</el-button>
+          </div>
         </div>
       </div>
     </div>
@@ -169,11 +237,14 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import { companyAPI } from '@/api'
+import { companyAPI, authAPI } from '@/api'
+import { useUserStore } from '@/stores/user'
 
+const userStore = useUserStore()
 const activeTab = ref('company')
 const saving = ref(false)
 const logoInput = ref(null)
+const licenseInput = ref(null)
 
 const tabs = [
   { label: '企业信息', value: 'company', icon: 'fas fa-building' },
@@ -294,11 +365,91 @@ const saveCompany = async () => {
   }
 }
 
+const notifications = reactive({
+  newApplicant: true,
+  withdraw: true,
+  activitySignup: true,
+  weeklyReport: false
+})
+
+const passwordForm = reactive({
+  oldPassword: '',
+  newPassword: '',
+  confirmPassword: ''
+})
+
+const loadPreferences = async () => {
+  try {
+    const res = await authAPI.getPreferences()
+    const saved = res.data?.notifications
+    if (saved) {
+      Object.assign(notifications, saved)
+    }
+  } catch (error) {
+    console.error('加载通知设置失败:', error)
+  }
+}
+
+const saveNotifications = async () => {
+  try {
+    await authAPI.savePreferences({ notifications })
+    ElMessage.success('通知设置已保存')
+  } catch (error) {
+    console.error('保存通知设置失败:', error)
+    ElMessage.error('保存失败')
+  }
+}
+
+const changePassword = async () => {
+  if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+    ElMessage.error('两次输入的密码不一致')
+    return
+  }
+  if (!passwordForm.oldPassword || !passwordForm.newPassword) {
+    ElMessage.error('请填写完整信息')
+    return
+  }
+  try {
+    await authAPI.changePassword({
+      old_password: passwordForm.oldPassword,
+      new_password: passwordForm.newPassword
+    })
+    ElMessage.success('密码修改成功')
+    passwordForm.oldPassword = ''
+    passwordForm.newPassword = ''
+    passwordForm.confirmPassword = ''
+  } catch (error) {
+    ElMessage.error(error.response?.data?.detail || '密码修改失败')
+  }
+}
+
+const triggerLicenseUpload = () => {
+  licenseInput.value?.click()
+}
+
+const handleLicenseUpload = async (event) => {
+  const file = event.target.files?.[0]
+  if (!file) return
+
+  const formData = new FormData()
+  formData.append('file', file)
+
+  try {
+    const res = await companyAPI.uploadLicense(formData)
+    company.value.license_url = res.data?.license_url || res.data?.url
+    ElMessage.success('营业执照上传成功，等待管理员审核')
+  } catch (error) {
+    console.error('上传营业执照失败:', error)
+    ElMessage.error(error.response?.data?.detail || '上传失败')
+  }
+}
+
 const editCompany = () => {
   activeTab.value = 'company'
 }
 
 onMounted(() => {
   fetchCompanyProfile()
+  loadPreferences()
 })
 </script>
