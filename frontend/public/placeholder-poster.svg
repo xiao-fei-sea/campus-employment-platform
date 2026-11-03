@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="200" viewBox="0 0 400 200">
+  <rect width="400" height="200" fill="#e5e7eb"/>
+  <text x="200" y="95" text-anchor="middle" fill="#9ca3af" font-size="18" font-family="Arial, sans-serif">暂无海报</text>
+  <circle cx="200" cy="120" r="15" fill="#9ca3af"/>
+  <text x="200" y="125" text-anchor="middle" fill="white" font-size="12" font-family="Arial, sans-serif">?</text>
+</svg>

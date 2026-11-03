@@ -1,0 +1,33 @@
+# 白名单模式：忽略根目录所有内容，仅保留前后端代码与 README 相关资源
+/*
+!/.gitignore
+!/backend/
+!/frontend/
+!/README.md
+
+# 只保留 README 需要的文档资源：建表脚本与演示截图
+!/docs/
+/docs/*
+!/docs/database_schema.sql
+!/docs/add_indexes.sql
+!/docs/screenshots/
+
+# ---- 后端 ----
+backend/.venv/
+backend/.idea/
+backend/.env
+backend/**/__pycache__/
+backend/**/*.pyc
+backend/**/*.log
+
+# 运行时上传的用户文件（简历 / 头像 / Logo）
+backend/**/uploads/
+
+# ---- 前端 ----
+frontend/node_modules/
+frontend/dist/
+frontend/.env*
+
+# ---- 编辑器 / 操作系统 ----
+**/.DS_Store
+**/Thumbs.db

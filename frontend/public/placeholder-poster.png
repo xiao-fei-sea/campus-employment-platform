@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="200" viewBox="0 0 400 200">
+  <rect width="400" height="200" fill="#e5e7eb"/>
+  <text x="200" y="90" text-anchor="middle" fill="#9ca3af" font-size="16" font-family="Arial, sans-serif">暂无海报</text>
+  <path d="M175 120 L200 95 L225 120 L215 120 L215 140 L185 140 L185 120 Z" fill="#9ca3af"/>
+</svg>

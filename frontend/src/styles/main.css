@@ -1,0 +1,118 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --primary: #0f172a;
+  --secondary: #3b82f6;
+  --success: #10b981;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+  background-color: #f8fafc;
+}
+
+.sidebar {
+  width: 256px;
+  min-height: 100vh;
+  background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+}
+
+.main-content {
+  margin-left: 256px;
+  min-height: 100vh;
+}
+
+.card {
+  background: white;
+  border-radius: 1rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s;
+}
+
+.card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.btn-primary {
+  @apply px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl transition-colors;
+}
+
+.btn-secondary {
+  @apply px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl transition-colors;
+}
+
+.stat-card {
+  @apply bg-white rounded-2xl p-6 shadow-sm;
+}
+
+.nav-item {
+  @apply flex items-center px-4 py-3 text-gray-400 hover:bg-gray-800 hover:text-white rounded-xl transition-all cursor-pointer;
+}
+
+.nav-item.active {
+  @apply bg-gray-800 text-white;
+}
+
+.page-container {
+  @apply p-8;
+}
+
+.page-title {
+  @apply text-2xl font-bold text-gray-900 mb-6;
+}
+
+.table-header {
+  @apply bg-gray-50 text-left text-sm font-medium text-gray-500 uppercase tracking-wider;
+}
+
+.table-cell {
+  @apply px-6 py-4 whitespace-nowrap text-sm text-gray-700;
+}
+
+.badge {
+  @apply px-2 py-1 text-xs rounded-full font-medium;
+}
+
+.badge-success {
+  @apply bg-green-100 text-green-700;
+}
+
+.badge-warning {
+  @apply bg-yellow-100 text-yellow-700;
+}
+
+.badge-danger {
+  @apply bg-red-100 text-red-700;
+}
+
+.badge-info {
+  @apply bg-blue-100 text-blue-700;
+}
+
+.modal-overlay {
+  @apply fixed inset-0 bg-black/50 flex items-center justify-center z-50;
+}
+
+.modal-content {
+  @apply bg-white rounded-2xl p-6 w-full max-w-md;
+}
+
+.form-label {
+  @apply block text-sm font-medium text-gray-700 mb-2;
+}
+
+.form-input {
+  @apply w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent;
+}
+
+.form-select {
+  @apply w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent;
+}
+
+.chart-container {
+  @apply w-full h-80;
+}
