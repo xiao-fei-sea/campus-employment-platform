@@ -58,8 +58,10 @@ api.interceptors.response.use(
           if (!isLoginRequest && !isRedirecting) {
             isRedirecting = true
             ElMessage.error('登录已过期，请重新登录')
-            console.error('401 Error - Redirecting to login. URL:', error.config?.url)
-            console.error('401 Error - Token:', localStorage.getItem('token'))
+            localStorage.removeItem('token')
+            router.push('/login').finally(() => {
+              isRedirecting = false
+            })
           }
           break
         case 403:
