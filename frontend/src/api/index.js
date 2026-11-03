@@ -97,7 +97,10 @@ export const authAPI = {
   me: () => api.get('/auth/me'),
   getWechatQRCode: () => api.get('/auth/wechat/qrcode'),
   getWechatQRStatus: (scene) => api.get(`/auth/wechat/qrstatus/${scene}`),
-  getPublicStats: () => api.get('/auth/public/stats')
+  getPublicStats: () => api.get('/auth/public/stats'),
+  changePassword: (data) => api.post('/auth/password', data),
+  getPreferences: () => api.get('/auth/preferences'),
+  savePreferences: (data) => api.put('/auth/preferences', data)
 }
 
 export const studentAPI = {

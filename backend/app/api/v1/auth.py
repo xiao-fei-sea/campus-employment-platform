@@ -18,8 +18,11 @@ from app.core.config import settings
 from app.core.rate_limit import rate_limit
 from app.models.user import User, UserRole
 from app.models.student import Student
+from app.schemas.user import PasswordChange
 from app.models.company import Company
 from app.schemas.user import UserCreate, UserResponse, Token, UserLogin, UserWithProfile, PhoneLogin, SmsSendRequest, SmsCodeResponse, WeChatQRCodeResponse, WeChatQRStatusResponse
+from app.models.preference import UserPreference
+import json
 
 router = APIRouter(tags=["认证"])
 
@@ -221,6 +224,56 @@ def login_json(user_data: UserLogin, db: Session = Depends(get_db)):
         expires_delta=access_token_expires
     )
     return {"access_token": access_token, "token_type": "bearer"}
+
+
+@router.post("/password")
+def change_password(
+    data: PasswordChange,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    if not verify_password(data.old_password, current_user.hashed_password):
+        raise HTTPException(status_code=400, detail="原密码错误")
+    if data.old_password == data.new_password:
+        raise HTTPException(status_code=400, detail="新密码不能与原密码相同")
+
+    current_user.hashed_password = get_password_hash(data.new_password)
+    db.commit()
+    return {"message": "密码修改成功"}
+
+
+@router.get("/preferences")
+def get_preferences(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    preference = db.query(UserPreference).filter(
+        UserPreference.user_id == current_user.id
+    ).first()
+    if not preference:
+        return {}
+    try:
+        return json.loads(preference.data)
+    except json.JSONDecodeError:
+        return {}
+
+
+@router.put("/preferences")
+def save_preferences(
+    data: dict,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    preference = db.query(UserPreference).filter(
+        UserPreference.user_id == current_user.id
+    ).first()
+    if not preference:
+        preference = UserPreference(user_id=current_user.id)
+        db.add(preference)
+
+    preference.data = json.dumps(data, ensure_ascii=False)
+    db.commit()
+    return data
 
 
 @router.get("/me", response_model=UserWithProfile)
