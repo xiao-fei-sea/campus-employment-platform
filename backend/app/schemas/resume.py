@@ -44,7 +44,7 @@ class ResumeBase(BaseModel):
 
 
 class ResumeCreate(ResumeBase):
-    student_id: int
+    pass
 
 
 class ResumeUpdate(BaseModel):
