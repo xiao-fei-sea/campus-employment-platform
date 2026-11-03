@@ -83,7 +83,7 @@
       <div ref="trendChartRef" class="w-full h-80 mb-6"></div>
       <div class="flex justify-between items-center mb-4">
         <h3 class="text-lg font-bold text-gray-900">就业数据明细</h3>
-        <el-button type="primary">
+        <el-button type="primary" @click="exportReport">
           <i class="fas fa-download mr-2"></i>导出报表
         </el-button>
       </div>
@@ -372,6 +372,22 @@ async function fetchStatistics() {
     }
   } catch (error) {
     console.error('获取统计数据失败:', error)
+  }
+}
+
+const exportReport = async () => {
+  try {
+    const res = await adminAPI.exportReport()
+    const url = window.URL.createObjectURL(new Blob([res.data], { type: 'text/csv;charset=utf-8' }))
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `students_${new Date().toISOString().slice(0, 10)}.csv`
+    link.click()
+    window.URL.revokeObjectURL(url)
+    ElMessage.success('导出成功')
+  } catch (error) {
+    console.error('导出报表失败:', error)
+    ElMessage.error('导出失败')
   }
 }
 
