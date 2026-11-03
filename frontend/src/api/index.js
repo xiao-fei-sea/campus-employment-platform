@@ -106,21 +106,32 @@ export const studentAPI = {
   getJobDetail: (id) => api.get(`/student/jobs/${id}`),
   collectJob: (id) => api.post(`/student/jobs/${id}/collect`),
   cancelCollect: (id) => api.delete(`/student/jobs/${id}/collect`),
-  applyJob: (id, data) => api.post(`/student/jobs/${id}/apply`),
+  applyJob: (id, data = {}) => api.post(`/student/jobs/${id}/apply`, data),
   withdrawApplication: (id) => api.post(`/student/applications/${id}/withdraw`),
   getApplications: (params) => api.get('/student/applications/', { params }),
   getFavorites: (params) => api.get('/student/jobs/favorites', { params }),
   getCareerTalks: (params) => api.get('/student/career-talks/', { params }),
+  getCareerTalk: (id) => api.get(`/student/career-talks/${id}`),
   getCareerTalkDetail: (id) => api.get(`/student/career-talks/${id}`),
-  registerCareerTalk: (id, data) => api.post(`/student/career-talks/${id}/register`),
+  registerCareerTalk: (id, data) => api.post(`/student/career-talks/${id}/register`, data),
+  cancelCareerTalk: (id) => api.delete(`/student/career-talks/${id}/cancel`),
   cancelCareerTalkRegistration: (id) => api.delete(`/student/career-talks/${id}/cancel`),
   getProfile: () => api.get('/student/profile/'),
-  updateProfile: (data) => api.put('/student/profile/'),
+  updateProfile: (data) => api.put('/student/profile/', data),
+  getSettings: () => api.get('/student/profile/'),
+  updateSettings: (data) => api.put('/student/profile/', data),
+  uploadAvatar: (formData) => api.post('/student/profile/avatar', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }),
   getResumes: (params) => api.get('/student/resumes/', { params }),
   createResume: (data) => api.post('/student/resumes/', data),
   updateResume: (id, data) => api.put(`/student/resumes/${id}`, data),
   deleteResume: (id) => api.delete(`/student/resumes/${id}`),
-  setDefaultResume: (id) => api.put(`/student/resumes/${id}/default`)
+  getResumeSuggestions: (id) => api.post(`/student/resumes/${id}/suggestions`),
+  uploadResume: (formData) => api.post('/student/resumes/upload', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }),
+  setDefaultResume: (id) => api.post(`/student/resumes/${id}/set-default`)
 }
 
 export const companyAPI = {
@@ -141,10 +152,10 @@ export const companyAPI = {
   getDashboard: () => api.get('/company/dashboard/'),
   getSettings: () => api.get('/company/profile/'),
   updateSettings: (data) => api.put('/company/profile/', data),
-  uploadLogo: (formData) => api.post('/company/profile/logo/', formData, {
+  uploadLogo: (formData) => api.post('/company/profile/logo', formData, {
     headers: { 'Content-Type': 'multipart/form-data' }
   }),
-  uploadLicense: (formData) => api.post('/company/license/upload/', formData, {
+  uploadLicense: (formData) => api.post('/company/license/upload', formData, {
     headers: { 'Content-Type': 'multipart/form-data' }
   })
 }
