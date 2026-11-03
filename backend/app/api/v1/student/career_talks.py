@@ -100,6 +100,18 @@ def list_career_talks(
     return result
 
 
+@router.get("/my-registrations", response_model=List[ActivityRegistrationResponse])
+def my_registrations(
+    db: Session = Depends(get_db),
+    current_student: Student = Depends(get_current_student)
+):
+    registrations = db.query(ActivityRegistration).filter(
+        ActivityRegistration.student_id == current_student.id
+    ).order_by(ActivityRegistration.created_at.desc()).all()
+
+    return registrations
+
+
 @router.get("/{talk_id}", response_model=CareerTalkListResponse)
 def get_career_talk(
     talk_id: int,
@@ -215,14 +227,3 @@ def cancel_registration(
 
     return {"message": "取消成功"}
 
-
-@router.get("/my-registrations", response_model=List[ActivityRegistrationResponse])
-def my_registrations(
-    db: Session = Depends(get_db),
-    current_student: Student = Depends(get_current_student)
-):
-    registrations = db.query(ActivityRegistration).filter(
-        ActivityRegistration.student_id == current_student.id
-    ).order_by(ActivityRegistration.created_at.desc()).all()
-
-    return registrations
