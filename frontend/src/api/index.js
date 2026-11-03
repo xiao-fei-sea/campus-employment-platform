@@ -92,12 +92,11 @@ api.interceptors.response.use(
 export default api
 
 export const authAPI = {
-  login: (data) => api.post('/auth/login/', data),
-  register: (data) => api.post('/auth/register/', data),
-  logout: () => api.post('/auth/logout/'),
-  me: () => api.get('/auth/me/'),
-  getWechatQRCode: () => api.get('/auth/wechat/qrcode/'),
-  getWechatQRStatus: (scene) => api.get(`/auth/wechat/qrstatus/${scene}/`),
+  login: (data) => api.post('/auth/login', data),
+  register: (data) => api.post('/auth/register', data),
+  me: () => api.get('/auth/me'),
+  getWechatQRCode: () => api.get('/auth/wechat/qrcode'),
+  getWechatQRStatus: (scene) => api.get(`/auth/wechat/qrstatus/${scene}`),
   getPublicStats: () => api.get('/auth/public/stats')
 }
 
