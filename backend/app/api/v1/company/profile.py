@@ -77,3 +77,42 @@ def upload_company_logo(
     db.refresh(current_company)
 
     return {"url": logo_url}
+
+
+@router.post("/license/upload", status_code=status.HTTP_200_OK)
+def upload_company_license(
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    current_company: Company = Depends(get_current_company)
+):
+    allowed_types = {"application/pdf", "image/jpeg", "image/png"}
+    if file.content_type not in allowed_types:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="仅支持 PDF、JPG、PNG 格式"
+        )
+
+    content = file.file.read()
+    if len(content) > 10 * 1024 * 1024:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="文件大小不能超过 10MB"
+        )
+
+    base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+    uploads_dir = os.path.join(base_dir, "uploads", "licenses")
+    os.makedirs(uploads_dir, exist_ok=True)
+
+    file_ext = os.path.splitext(file.filename)[1] if file.filename else ".pdf"
+    file_name = f"{uuid.uuid4().hex}{file_ext}"
+    file_path = os.path.join(uploads_dir, file_name)
+
+    with open(file_path, "wb") as buffer:
+        buffer.write(content)
+
+    license_url = f"/uploads/licenses/{file_name}"
+    current_company.license_url = license_url
+    db.commit()
+    db.refresh(current_company)
+
+    return {"url": license_url, "license_url": license_url}
