@@ -331,8 +331,8 @@ const fetchJobs = async () => {
       isApplied: job.has_applied || false,
       is_urgent: job.is_urgent || false,
       is_campus: job.is_campus_recruit || false,
-      viewCount: job.view_count ?? Math.floor(Math.random() * 2000),
-      applyCount: job.application_count ?? Math.floor(Math.random() * 200),
+      viewCount: job.view_count ?? 0,
+      applyCount: job.application_count ?? 0,
       postedDaysAgo: getPostedDaysAgo(job.created_at)
     }))
     total.value = totalCount
