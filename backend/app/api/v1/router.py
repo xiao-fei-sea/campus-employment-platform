@@ -6,6 +6,7 @@ from app.api.v1.student.applications import router as student_applications_route
 from app.api.v1.student.career_talks import router as student_career_talks_router
 from app.api.v1.student.profile import router as student_profile_router
 from app.api.v1.student.dashboard import router as student_dashboard_router
+from app.api.v1.student.messages import router as student_messages_router
 from app.api.v1.company.jobs import router as company_jobs_router
 from app.api.v1.company.resumes import router as company_resumes_router
 from app.api.v1.company.career_talks import router as company_career_talks_router
@@ -27,6 +28,7 @@ api_router.include_router(student_applications_router, prefix="/student/applicat
 api_router.include_router(student_career_talks_router, prefix="/student/career-talks", tags=["学生-宣讲会"])
 api_router.include_router(student_profile_router, prefix="/student/profile", tags=["学生-个人信息"])
 api_router.include_router(student_dashboard_router, prefix="/student/dashboard", tags=["学生-仪表盘"])
+api_router.include_router(student_messages_router, prefix="/student/messages", tags=["学生-消息"])
 api_router.include_router(company_jobs_router, prefix="/company/jobs", tags=["企业-岗位"])
 api_router.include_router(company_resumes_router, prefix="/company/resumes", tags=["企业-简历"])
 api_router.include_router(company_career_talks_router, prefix="/company/career-talks", tags=["企业-宣讲会"])

@@ -11,6 +11,7 @@ from app.models.job import Job
 from app.models.resume import Resume
 from app.models.application import Application, ApplicationStatus
 from app.models.student import Student
+from app.models.message import Message
 from app.schemas.application import ApplicationListResponse
 
 router = APIRouter(tags=["企业-简历管理"])
@@ -168,6 +169,23 @@ def update_application_status(
     if data.offer_salary:
         application.offer_salary = data.offer_salary
 
+    status_text = {
+        ApplicationStatus.VIEWED: "您的简历已被查看",
+        ApplicationStatus.PASSED: "您已通过简历筛选",
+        ApplicationStatus.FAILED: "很遗憾，您未通过简历筛选",
+        ApplicationStatus.OFFERED: "恭喜您获得录用通知",
+        ApplicationStatus.REJECTED: "您的投递已被拒绝",
+    }.get(data.status, "您的投递状态已更新")
+
+    message = Message(
+        user_id=application.student.user_id,
+        title=status_text,
+        content=data.feedback or f"您投递的岗位「{application.job.title}」状态已更新。",
+        type="application",
+        related_id=application.id,
+        related_type="application"
+    )
+    db.add(message)
     db.commit()
 
     return {"message": "更新成功"}
