@@ -1,11 +1,16 @@
 from fastapi import APIRouter, Depends, Query
+from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 from sqlalchemy import func, case, and_
 from datetime import datetime, timedelta
 from typing import Optional
+import csv
+import io
 
 from app.core.database import get_db
 from app.core.redis_client import get_cache, set_cache
+from app.core.security import require_roles
+from app.models.user import User, UserRole
 from app.models.student import Student, EmploymentStatus
 from app.models.company import Company, CompanyStatus
 from app.models.job import Job, JobStatus
@@ -742,3 +747,36 @@ def get_activity_stats(db: Session = Depends(get_db)):
 
     set_cache(cache_key, result, expire=STATS_CACHE_TTL)
     return result
+
+
+@router.get("/export")
+def export_statistics(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_roles(UserRole.ADMIN, UserRole.COUNSELOR))
+):
+    students = db.query(Student).order_by(Student.id).all()
+
+    buffer = io.StringIO()
+    writer = csv.writer(buffer)
+    writer.writerow(["学号", "姓名", "学院", "专业", "班级", "毕业年份", "就业状态", "重点帮扶"])
+    for s in students:
+        status = s.employment_status.value if hasattr(s.employment_status, "value") else s.employment_status
+        writer.writerow([
+            s.student_no or "",
+            s.name or "",
+            s.college or "",
+            s.major or "",
+            s.class_name or "",
+            s.graduation_year or "",
+            status or "",
+            "是" if s.is_key_assistance else "否",
+        ])
+
+    content = buffer.getvalue()
+    buffer.close()
+    filename = f"students_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+    return StreamingResponse(
+        iter([content]),
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'}
+    )
