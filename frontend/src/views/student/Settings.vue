@@ -168,7 +168,7 @@
 <script setup>
 import { ref, reactive, onMounted, computed } from 'vue'
 import { ElMessage } from 'element-plus'
-import { studentAPI } from '@/api'
+import { studentAPI, authAPI } from '@/api'
 import { useUserStore } from '@/stores/user'
 import api from '@/api'
 
@@ -295,8 +295,29 @@ const saveBasic = async () => {
   }
 }
 
-const savePreferences = () => ElMessage.success('求职偏好已保存')
-const changePassword = () => {
+const savePreferences = async () => {
+  try {
+    await authAPI.savePreferences({ preferences })
+    ElMessage.success('求职偏好已保存')
+  } catch (error) {
+    console.error('保存求职偏好失败:', error)
+    ElMessage.error('保存失败')
+  }
+}
+
+const loadPreferences = async () => {
+  try {
+    const res = await authAPI.getPreferences()
+    const saved = res.data?.preferences
+    if (saved) {
+      Object.assign(preferences, saved)
+    }
+  } catch (error) {
+    console.error('加载求职偏好失败:', error)
+  }
+}
+
+const changePassword = async () => {
   if (passwordForm.newPassword !== passwordForm.confirmPassword) {
     ElMessage.error('两次输入的密码不一致')
     return
@@ -305,14 +326,23 @@ const changePassword = () => {
     ElMessage.error('请填写完整信息')
     return
   }
-  ElMessage.success('密码修改成功')
-  passwordForm.oldPassword = ''
-  passwordForm.newPassword = ''
-  passwordForm.confirmPassword = ''
+  try {
+    await authAPI.changePassword({
+      old_password: passwordForm.oldPassword,
+      new_password: passwordForm.newPassword
+    })
+    ElMessage.success('密码修改成功')
+    passwordForm.oldPassword = ''
+    passwordForm.newPassword = ''
+    passwordForm.confirmPassword = ''
+  } catch (error) {
+    ElMessage.error(error.response?.data?.detail || '密码修改失败')
+  }
 }
 
 onMounted(() => {
   fetchProfile()
+  loadPreferences()
 })
 </script>
 
