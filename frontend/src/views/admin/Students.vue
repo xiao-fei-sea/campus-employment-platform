@@ -214,6 +214,42 @@
         <el-button type="primary" @click="onSaveEdit">保存</el-button>
       </template>
     </el-dialog>
+
+    <el-dialog v-model="showAddDialog" title="添加学生" width="600px">
+      <el-form :model="addForm" label-width="90px">
+        <div class="grid grid-cols-2 gap-4">
+          <el-form-item label="学号" required>
+            <el-input v-model="addForm.student_no" placeholder="请输入学号" />
+          </el-form-item>
+          <el-form-item label="姓名" required>
+            <el-input v-model="addForm.name" placeholder="请输入姓名" />
+          </el-form-item>
+          <el-form-item label="学院">
+            <el-input v-model="addForm.college" placeholder="请输入学院" />
+          </el-form-item>
+          <el-form-item label="专业">
+            <el-input v-model="addForm.major" placeholder="请输入专业" />
+          </el-form-item>
+          <el-form-item label="班级">
+            <el-input v-model="addForm.class_name" placeholder="请输入班级" />
+          </el-form-item>
+          <el-form-item label="毕业年份">
+            <el-input-number v-model="addForm.graduation_year" :min="2020" :max="2035" class="w-full" />
+          </el-form-item>
+          <el-form-item label="手机号">
+            <el-input v-model="addForm.phone" placeholder="请输入手机号" />
+          </el-form-item>
+          <el-form-item label="登录密码">
+            <el-input v-model="addForm.password" type="password" show-password />
+          </el-form-item>
+        </div>
+      </el-form>
+      <p class="text-xs text-gray-500">登录名默认使用学号，邮箱默认使用“学号@campus.edu.cn”。</p>
+      <template #footer>
+        <el-button @click="showAddDialog = false">取消</el-button>
+        <el-button type="primary" @click="submitAddStudent">添加</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -241,6 +277,17 @@ const showExportMenu = ref(false)
 const showDetailDialog = ref(false)
 const currentStudent = ref({})
 const showEditDialog = ref(false)
+const showAddDialog = ref(false)
+const addForm = ref({
+  student_no: '',
+  name: '',
+  college: '',
+  major: '',
+  class_name: '',
+  graduation_year: new Date().getFullYear() + 1,
+  phone: '',
+  password: '123456'
+})
 const editForm = ref({
   employment_status: '',
   is_key_assistance: false,
@@ -443,7 +490,33 @@ function exportData(format) {
 }
 
 function onAddStudent() {
-  ElMessage.info('添加学生功能开发中')
+  addForm.value = {
+    student_no: '',
+    name: '',
+    college: '',
+    major: '',
+    class_name: '',
+    graduation_year: new Date().getFullYear() + 1,
+    phone: '',
+    password: '123456'
+  }
+  showAddDialog.value = true
+}
+
+async function submitAddStudent() {
+  if (!addForm.value.student_no || !addForm.value.name) {
+    ElMessage.warning('请填写学号和姓名')
+    return
+  }
+  try {
+    await adminAPI.createStudent(addForm.value)
+    ElMessage.success('添加成功')
+    showAddDialog.value = false
+    fetchStudents()
+    fetchStats()
+  } catch (error) {
+    ElMessage.error(error.response?.data?.detail || '添加失败')
+  }
 }
 
 watch([filterCollege, filterMajor, filterStatus, filterDegree, filterAssistance], () => {

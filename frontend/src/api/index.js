@@ -172,6 +172,7 @@ export const adminAPI = {
   get: (path) => api.get(path),
   getDashboardStats: () => api.get('/admin/statistics/stats'),
   getStudents: (params) => api.get('/admin/students', { params }),
+  createStudent: (data) => api.post('/admin/students', data),
   getStudentDetail: (id) => api.get(`/admin/students/${id}`),
   updateStudent: (id, data) => api.put(`/admin/students/${id}`, data),
   updateStudentStatus: (id, data) => api.put(`/admin/students/${id}/status`, data),

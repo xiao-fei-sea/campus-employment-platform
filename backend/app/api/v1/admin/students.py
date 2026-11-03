@@ -2,16 +2,60 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from app.core.security import require_roles
+from app.core.security import require_roles, get_password_hash
 from app.models.user import User, UserRole
 from app.models.student import Student, EmploymentStatus
 from app.models.application import Application
 from app.models.company import Company
 from app.models.job import Job
 from app.models.resume import Resume
-from app.schemas.student import StudentResponse, StudentUpdate, PaginatedStudentResponse
+from app.schemas.student import StudentResponse, StudentUpdate, PaginatedStudentResponse, AdminStudentCreate
 
 router = APIRouter(tags=["管理端-学生管理"])
+
+
+@router.post("", response_model=StudentResponse, status_code=201)
+@router.post("/", response_model=StudentResponse, status_code=201)
+def create_student(
+    data: AdminStudentCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_roles(UserRole.ADMIN, UserRole.COUNSELOR))
+):
+    if db.query(Student).filter(Student.student_no == data.student_no).first():
+        raise HTTPException(status_code=400, detail="学号已存在")
+
+    username = data.username or data.student_no
+    if db.query(User).filter(User.username == username).first():
+        raise HTTPException(status_code=400, detail="登录名已存在")
+
+    email = data.email or f"{data.student_no}@campus.edu.cn"
+
+    user = User(
+        username=username,
+        email=email,
+        hashed_password=get_password_hash(data.password),
+        role=UserRole.STUDENT,
+        is_active=True
+    )
+    db.add(user)
+    db.flush()
+
+    student = Student(
+        user_id=user.id,
+        student_no=data.student_no,
+        name=data.name,
+        gender=data.gender,
+        phone=data.phone,
+        college=data.college,
+        major=data.major,
+        class_name=data.class_name,
+        graduation_year=data.graduation_year,
+        employment_status=data.employment_status
+    )
+    db.add(student)
+    db.commit()
+    db.refresh(student)
+    return student
 
 
 @router.get("", response_model=PaginatedStudentResponse)

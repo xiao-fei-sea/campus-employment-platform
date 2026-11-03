@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, EmailStr
 from typing import Optional, List
 from datetime import datetime
 from app.models.student import EmploymentStatus
@@ -28,6 +28,21 @@ class StudentUpdate(BaseModel):
     is_key_assistance: Optional[bool] = None
     assistance_note: Optional[str] = None
     resume_url: Optional[str] = None
+
+
+class AdminStudentCreate(BaseModel):
+    student_no: str = Field(..., min_length=1, max_length=20)
+    name: str = Field(..., min_length=1, max_length=50)
+    username: Optional[str] = None
+    email: Optional[EmailStr] = None
+    password: str = Field(default="123456", min_length=6, max_length=100)
+    gender: Optional[str] = None
+    phone: Optional[str] = None
+    college: Optional[str] = None
+    major: Optional[str] = None
+    class_name: Optional[str] = None
+    graduation_year: Optional[int] = None
+    employment_status: EmploymentStatus = EmploymentStatus.SEARCHING
 
 
 class StudentResponse(StudentBase):
