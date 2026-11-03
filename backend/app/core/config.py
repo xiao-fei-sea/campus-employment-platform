@@ -19,6 +19,7 @@ class Settings(BaseSettings):
 
     DATABASE_URL: str = "mysql+pymysql://root:107606@localhost:3306/campus_employment"
     REDIS_URL: str = "redis://localhost:6379/0"
+    CORS_ORIGINS: str = "http://localhost:5173,http://127.0.0.1:5173"
 
     CELERY_BROKER_URL: str = "redis://localhost:6379/1"
     CELERY_RESULT_BACKEND: str = "redis://localhost:6379/2"

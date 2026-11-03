@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
 from sqlalchemy.orm import Session
 from typing import List
+import json
 
 from app.core.database import get_db
 from app.core.security import get_current_user
@@ -79,14 +80,14 @@ async def get_resume_suggestions(
 
     if resume.education_list:
         try:
-            resume_data['educationList'] = eval(resume.education_list)
-        except:
+            resume_data['educationList'] = json.loads(resume.education_list)
+        except (json.JSONDecodeError, TypeError):
             pass
 
     if resume.experience_list:
         try:
-            resume_data['experienceList'] = eval(resume.experience_list)
-        except:
+            resume_data['experienceList'] = json.loads(resume.experience_list)
+        except (json.JSONDecodeError, TypeError):
             pass
 
     if resume.skill_names:
@@ -94,10 +95,10 @@ async def get_resume_suggestions(
 
     if resume.certificate_list:
         try:
-            certs = eval(resume.certificate_list)
+            certs = json.loads(resume.certificate_list)
             if isinstance(certs, list):
                 resume_data['certificateList'] = certs
-        except:
+        except (json.JSONDecodeError, TypeError):
             pass
 
     suggestions = await llm_service.generate_resume_suggestions(resume_data)
