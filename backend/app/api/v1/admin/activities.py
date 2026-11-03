@@ -9,7 +9,7 @@ from app.core.security import require_roles
 from app.models.user import User, UserRole
 from app.models.activity import CareerTalk, ActivityRegistration, ActivityStatus
 from app.models.company import Company
-from app.schemas.activity import CareerTalkResponse, CareerTalkApprove, PaginatedCareerTalkResponse, CareerTalkListResponse
+from app.schemas.activity import CareerTalkResponse, CareerTalkApprove, PaginatedCareerTalkResponse, CareerTalkListResponse, AdminCareerTalkCreate
 
 router = APIRouter(tags=["管理端-活动管理"])
 
@@ -80,6 +80,27 @@ def list_all_career_talks(
     )
 
 
+@router.post("/career-talks", response_model=CareerTalkResponse)
+def create_career_talk(
+    talk_data: AdminCareerTalkCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_roles(UserRole.ADMIN))
+):
+    company = db.query(Company).filter(Company.id == talk_data.company_id).first()
+    if not company:
+        raise HTTPException(status_code=404, detail="企业不存在")
+
+    data = talk_data.model_dump()
+    talk = CareerTalk(**data)
+    if talk.status == ActivityStatus.APPROVED:
+        talk.approved_at = datetime.now()
+        talk.approved_by = current_user.id
+    db.add(talk)
+    db.commit()
+    db.refresh(talk)
+    return talk
+
+
 @router.get("/career-talks/{talk_id}", response_model=CareerTalkResponse)
 def get_career_talk(
     talk_id: int,
@@ -126,7 +147,7 @@ def delete_career_talk(
     if not talk:
         raise HTTPException(status_code=404, detail="宣讲会不存在")
 
-    ActivityRegistration.query.filter(
+    db.query(ActivityRegistration).filter(
         ActivityRegistration.career_talk_id == talk_id
     ).delete(synchronize_session=False)
 

@@ -23,6 +23,11 @@ class CareerTalkCreate(CareerTalkBase):
     pass
 
 
+class AdminCareerTalkCreate(CareerTalkCreate):
+    company_id: int
+    status: ActivityStatus = ActivityStatus.APPROVED
+
+
 class CareerTalkUpdate(BaseModel):
     title: Optional[str] = None
     speaker_name: Optional[str] = None
