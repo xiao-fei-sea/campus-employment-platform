@@ -8,6 +8,9 @@ from app.core.security import get_current_user
 from app.models.user import User, UserRole
 from app.models.company import Company
 from app.models.job import Job, JobStatus
+from app.models.application import Application
+from app.models.resume import Resume
+from app.models.student import Student
 from app.schemas.job import JobCreate, JobUpdate, JobResponse
 
 router = APIRouter(tags=["企业-岗位管理"])
@@ -73,6 +76,50 @@ def get_company_job(
     if not job:
         raise HTTPException(status_code=404, detail="岗位不存在")
     return job
+
+
+@router.get("/{job_id}/applicants")
+def get_job_applicants(
+    job_id: int,
+    status: str = Query(None),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=100),
+    db: Session = Depends(get_db),
+    current_company: Company = Depends(get_current_company)
+):
+    job = db.query(Job).filter(
+        Job.id == job_id,
+        Job.company_id == current_company.id
+    ).first()
+    if not job:
+        raise HTTPException(status_code=404, detail="岗位不存在")
+
+    query = db.query(Application).filter(Application.job_id == job_id)
+    if status:
+        query = query.filter(Application.status == status)
+
+    total = query.count()
+    applications = query.order_by(Application.created_at.desc()).offset(
+        (page - 1) * page_size
+    ).limit(page_size).all()
+
+    data = []
+    for app in applications:
+        resume = db.query(Resume).filter(Resume.id == app.resume_id).first()
+        student = db.query(Student).filter(Student.id == app.student_id).first()
+        data.append({
+            "id": app.id,
+            "job_id": app.job_id,
+            "resume_id": app.resume_id,
+            "student_name": student.name if student else "",
+            "student_no": student.student_no if student else "",
+            "major": student.major if student else "",
+            "resume_title": resume.title if resume else "",
+            "status": app.status.value if hasattr(app.status, "value") else app.status,
+            "created_at": app.created_at
+        })
+
+    return {"total": total, "page": page, "page_size": page_size, "data": data}
 
 
 @router.post("/", response_model=JobResponse)
