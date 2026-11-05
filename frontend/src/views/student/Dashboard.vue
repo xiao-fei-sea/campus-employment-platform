@@ -199,7 +199,7 @@ const fetchRecommendedJobs = async () => {
       id: job.id,
       title: job.title,
       company: job.company_name,
-      logo: job.company_logo || 'https://via.placeholder.com/80',
+      logo: job.company_logo || '/placeholder-logo.png',
       salary: job.salary_show || `${(job.salary_min || 0) / 1000}-${(job.salary_max || 0) / 1000}K`,
       location: job.city || job.province || '未知',
       posted: formatDate(job.created_at),
@@ -237,7 +237,7 @@ const fetchUpcomingTalks = async () => {
     upcomingTalks.value = (Array.isArray(data) ? data : []).map(talk => ({
       id: talk.id,
       company: talk.company_name,
-      logo: talk.company_logo || 'https://via.placeholder.com/80',
+      logo: talk.company_logo || '/placeholder-logo.png',
       date: formatTalkDate(talk.start_time),
       time: `${formatTime(talk.start_time)} - ${formatTime(talk.end_time)}`
     }))

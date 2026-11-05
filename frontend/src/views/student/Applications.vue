@@ -187,7 +187,7 @@ const fetchApplications = async () => {
       jobId: app.job_id,
       jobTitle: app.job_title || '未知岗位',
       company: app.company_name || '未知公司',
-      logo: app.company_logo || 'https://via.placeholder.com/80',
+      logo: app.company_logo || '/placeholder-logo.png',
       location: app.city || app.province || '未知',
       salary: app.salary_show || `${(app.salary_min || 0) / 1000}-${(app.salary_max || 0) / 1000}K`,
       applyTime: app.created_at,

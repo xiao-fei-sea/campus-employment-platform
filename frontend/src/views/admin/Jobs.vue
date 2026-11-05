@@ -87,7 +87,7 @@
       >
         <div class="flex items-start justify-between">
           <div class="flex items-start space-x-4">
-            <img :src="job.company_logo || 'https://via.placeholder.com/56'" class="w-14 h-14 rounded-xl object-cover">
+            <img :src="job.company_logo || '/placeholder-logo.png'" class="w-14 h-14 rounded-xl object-cover">
             <div class="flex-1">
               <div class="flex items-center space-x-3 mb-2">
                 <h3 class="text-lg font-bold text-gray-900">{{ job.title }}</h3>
@@ -151,7 +151,7 @@
     <el-dialog v-model="showDetailDialog" title="岗位详情" width="600px">
       <div class="space-y-4" v-if="currentJob.id">
         <div class="flex items-center space-x-4 mb-6">
-          <img :src="currentJob.company_logo || 'https://via.placeholder.com/56'" class="w-16 h-16 rounded-xl object-cover">
+          <img :src="currentJob.company_logo || '/placeholder-logo.png'" class="w-16 h-16 rounded-xl object-cover">
           <div>
             <h3 class="text-xl font-bold text-gray-900">{{ currentJob.title }}</h3>
             <p class="text-gray-500">{{ currentJob.company_name || '-' }}</p>

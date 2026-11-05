@@ -321,7 +321,7 @@ const fetchJobs = async () => {
       id: job.id,
       title: job.title,
       company: job.company_name,
-      logo: job.company_logo || 'https://via.placeholder.com/80',
+      logo: job.company_logo || '/placeholder-logo.png',
       salary: job.salary_show || `${(job.salary_min || 0) / 1000}-${(job.salary_max || 0) / 1000}K`,
       location: job.city || job.province || '未知',
       experience: job.requirement || '不限',

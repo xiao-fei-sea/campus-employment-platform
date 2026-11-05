@@ -62,7 +62,7 @@
         <el-table-column label="账号信息" min-width="200">
           <template #default="{ row }">
             <div class="flex items-center space-x-3">
-              <img :src="row.avatar || 'https://via.placeholder.com/40'" class="w-10 h-10 rounded-full">
+              <img :src="row.avatar || '/placeholder-logo.png'" class="w-10 h-10 rounded-full">
               <div>
                 <p class="font-medium text-gray-900">{{ row.name || row.username }}</p>
                 <p class="text-sm text-gray-500">{{ row.email }}</p>
